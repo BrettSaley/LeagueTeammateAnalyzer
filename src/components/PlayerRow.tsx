@@ -16,6 +16,8 @@ interface Props {
   timesPlayed?: number
   /** undefined = not requested, null = loading, otherwise the rating. */
   rating?: PlayerRating | null
+  /** if set, the name becomes a button that searches this player */
+  onPick?: () => void
 }
 
 export function PlayerRow(p: Props) {
@@ -44,10 +46,22 @@ export function PlayerRow(p: Props) {
       )}
 
       <div className="who">
-        <span className="name">
-          {p.name}
-          {p.tag && <span className="tag">#{p.tag}</span>}
-        </span>
+        {p.onPick && !p.isSelf ? (
+          <button
+            type="button"
+            className="name name-link"
+            onClick={p.onPick}
+            title={`Search ${p.name}`}
+          >
+            {p.name}
+            {p.tag && <span className="tag">#{p.tag}</span>}
+          </button>
+        ) : (
+          <span className="name">
+            {p.name}
+            {p.tag && <span className="tag">#{p.tag}</span>}
+          </span>
+        )}
         {p.rank && <span className="rank">{p.rank}</span>}
       </div>
 

@@ -38,6 +38,15 @@ export default function App() {
     setQuery({ riotId: nextRiotId, region: nextRegion })
   }, [])
 
+  // Click a player's name anywhere -> search them (same region).
+  const pickPlayer = useCallback(
+    (nextRiotId: string) => {
+      setQuery({ riotId: nextRiotId, region })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
+    [region],
+  )
+
   useEffect(() => {
     localStorage.setItem('riotId', riotId)
     localStorage.setItem('region', region)
@@ -101,9 +110,14 @@ export default function App() {
             </button>
           </nav>
           {tab === 'live' ? (
-            <LiveGame region={region} puuid={account.puuid} dd={dd} />
+            <LiveGame region={region} puuid={account.puuid} dd={dd} onPickPlayer={pickPlayer} />
           ) : (
-            <MatchHistory region={region} puuid={account.puuid} dd={dd} />
+            <MatchHistory
+              region={region}
+              puuid={account.puuid}
+              dd={dd}
+              onPickPlayer={pickPlayer}
+            />
           )}
         </>
       )}

@@ -13,11 +13,12 @@ interface Props {
   region: string
   puuid: string
   dd: Ddragon | null
+  onPickPlayer: (riotId: string) => void
 }
 
 const COUNT = 10
 
-export function MatchHistory({ region, puuid, dd }: Props) {
+export function MatchHistory({ region, puuid, dd, onPickPlayer }: Props) {
   const [matches, setMatches] = useState<MatchDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -124,6 +125,7 @@ export function MatchHistory({ region, puuid, dd }: Props) {
               tag={t.tag}
               timesPlayed={t.count}
               rating={ratingAt(t.puuid)}
+              onPick={t.tag ? () => onPickPlayer(`${t.name}#${t.tag}`) : undefined}
             />
           ))}
         </section>
@@ -149,6 +151,11 @@ export function MatchHistory({ region, puuid, dd }: Props) {
               tag={p.riotIdTagline}
               kda={{ k: p.kills, d: p.deaths, a: p.assists }}
               rating={isAnalyzed ? ratingAt(p.puuid, m.info.gameCreation) : undefined}
+              onPick={
+                p.riotIdTagline
+                  ? () => onPickPlayer(`${displayName(p)}#${p.riotIdTagline}`)
+                  : undefined
+              }
               isSelf={p.puuid === puuid}
             />
           )

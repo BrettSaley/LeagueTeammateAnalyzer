@@ -13,11 +13,12 @@ interface Props {
   region: string
   puuid: string
   dd: Ddragon | null
+  onPickPlayer: (riotId: string) => void
 }
 
 type Status = 'loading' | 'not-in-game' | 'ok' | 'error'
 
-export function LiveGame({ region, puuid, dd }: Props) {
+export function LiveGame({ region, puuid, dd, onPickPlayer }: Props) {
   const [game, setGame] = useState<CurrentGameInfo | null>(null)
   const [status, setStatus] = useState<Status>('loading')
   const [error, setError] = useState<string | null>(null)
@@ -112,6 +113,7 @@ export function LiveGame({ region, puuid, dd }: Props) {
         dd={dd}
         ranks={ranks}
         ratingOf={ratingOf}
+        onPickPlayer={onPickPlayer}
         bans={game.bannedChampions.filter((b) => b.teamId === myTeam)}
       />
       <Team
@@ -121,6 +123,7 @@ export function LiveGame({ region, puuid, dd }: Props) {
         dd={dd}
         ranks={ranks}
         ratingOf={ratingOf}
+        onPickPlayer={onPickPlayer}
         bans={game.bannedChampions.filter((b) => b.teamId !== myTeam)}
       />
     </div>
@@ -134,6 +137,7 @@ function Team({
   dd,
   ranks,
   ratingOf,
+  onPickPlayer,
   bans,
 }: {
   title: string
@@ -142,6 +146,7 @@ function Team({
   dd: Ddragon | null
   ranks: Record<string, string>
   ratingOf: RatingOf
+  onPickPlayer: (riotId: string) => void
   bans: BannedChampion[]
 }) {
   const visibleBans = bans.filter((b) => b.championId > 0)
@@ -169,6 +174,7 @@ function Team({
             runeIds={p.perks ? [p.perks.perkIds[0], p.perks.perkSubStyle] : undefined}
             rank={ranks[p.puuid]}
             rating={ratingOf(p.puuid)}
+            onPick={tag ? () => onPickPlayer(`${name}#${tag}`) : undefined}
             isSelf={p.puuid === puuid}
           />
         )

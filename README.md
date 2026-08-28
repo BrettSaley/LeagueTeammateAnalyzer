@@ -47,18 +47,21 @@ ignored):
   the 10 players on the ranked games they had played *before* that match (their
   form going in), via the MATCH-V5 `endTime` filter.
 
-**Raw score.** Each game is scored 0–100 from a weighted blend:
+**Raw score.** Each game is scored 0–100 from a weighted blend, with a separate
+profile for games played in the support (UTILITY) role:
 
-| Indicator | Weight | Notes |
+| Indicator | Non-support | Support |
 | --- | --- | --- |
-| KDA | 28% | |
-| Kill participation | 22% | |
-| CS per minute | 18% | dropped for support games; the other four weights renormalise to 1 |
-| Gold per minute | 16% | |
-| Damage share of team | 16% | |
+| KDA | 28% | 30% |
+| Kill participation | 22% | 32% |
+| CS per minute | 18% | — |
+| Vision per minute | — | 32% |
+| Gold per minute | 16% | — |
+| Damage share of team | 16% | 6% |
 
 Win/loss is deliberately *not* an input – it's a team result, not individual
-performance. Per-game W/L is still shown in the scorecard for context.
+performance. Per-game W/L is still shown in the scorecard for context. Both
+profiles live in `CONFIG.weights` / `CONFIG.supportWeights`.
 
 **Rank adjustment.** The averaged raw score is re-centred for the player's
 actual solo/flex rank (from LEAGUE-V4): each rank has an `expected` raw score

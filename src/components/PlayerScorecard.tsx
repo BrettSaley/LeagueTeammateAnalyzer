@@ -127,7 +127,11 @@ export function PlayerScorecard({ name, tag, rating, dd }: Props) {
                     {c.wins}W {c.games - c.wins}L
                   </span>
                   <span>{c.kda.toFixed(1)} KDA</span>
-                  <span className="champ-cs">{c.csPerMin.toFixed(1)} cs/m</span>
+                  <span className="champ-cs">
+                    {rating!.isSupport
+                      ? `${c.visionPerMin.toFixed(1)} vis/m`
+                      : `${c.csPerMin.toFixed(1)} cs/m`}
+                  </span>
                   <span className="champ-score">{Math.round(c.score)}</span>
                   <span
                     className="rating"
@@ -153,22 +157,29 @@ interface ChampStat {
   score: number
   kda: number
   csPerMin: number
+  visionPerMin: number
 }
 
 function champStats(games: GameScore[]): ChampStat[] {
-  const acc = new Map<
-    string,
-    { id: number; games: number; wins: number; score: number; kda: number; csPerMin: number }
-  >()
+  const acc = new Map<string, Omit<ChampStat, 'name'>>()
   for (const g of games) {
     const e =
       acc.get(g.championName) ??
-      { id: g.championId, games: 0, wins: 0, score: 0, kda: 0, csPerMin: 0 }
+      {
+        id: g.championId,
+        games: 0,
+        wins: 0,
+        score: 0,
+        kda: 0,
+        csPerMin: 0,
+        visionPerMin: 0,
+      }
     e.games += 1
     e.wins += g.win ? 1 : 0
     e.score += g.score
     e.kda += g.kda
     e.csPerMin += g.csPerMin
+    e.visionPerMin += g.visionPerMin
     acc.set(g.championName, e)
   }
   return [...acc.entries()]
@@ -180,6 +191,7 @@ function champStats(games: GameScore[]): ChampStat[] {
       score: e.score / e.games,
       kda: e.kda / e.games,
       csPerMin: e.csPerMin / e.games,
+      visionPerMin: e.visionPerMin / e.games,
     }))
     .sort((a, b) => b.games - a.games || b.score - a.score)
 }
@@ -189,19 +201,35 @@ function factorLevel(sub: number): 'good' | 'ok' | 'poor' {
 }
 
 function factorRows(r: PlayerRating) {
-  const w = effectiveWeights(r.farmExcluded)
-  const row = (key: keyof Parts, label: string, value: string) => ({
+  const w = effectiveWeights(r.isSupport)
+  const row = (
+    key: keyof Parts,
+    label: string,
+    value: string,
+    forceLevel?: 'good' | 'ok' | 'poor',
+  ) => ({
     key,
     label,
     value,
     sub: r.avgParts[key],
-    level: factorLevel(r.avgParts[key]),
+    level: forceLevel ?? factorLevel(r.avgParts[key]),
     points: r.avgParts[key] * (w[key] ?? 0) * 100,
   })
+
+  if (r.isSupport) {
+    return [
+      row('kda', 'KDA', r.avg.kda.toFixed(1)),
+      row('kp', 'Kill participation', pct(r.avg.killParticipation)),
+      row('farm', 'Vision / min', r.avg.visionPerMin.toFixed(1)),
+      // support damage is expected to be low - don't flag it red
+      row('damage', 'Damage share', pct(r.avg.damageShare), 'ok'),
+    ]
+  }
+
   return [
     row('kda', 'KDA', r.avg.kda.toFixed(1)),
     row('kp', 'Kill participation', pct(r.avg.killParticipation)),
-    ...(r.farmExcluded ? [] : [row('farm', 'CS / min', r.avg.csPerMin.toFixed(1))]),
+    row('farm', 'CS / min', r.avg.csPerMin.toFixed(1)),
     row('gold', 'Gold / min', Math.round(r.avg.goldPerMin).toString()),
     row('damage', 'Damage share', pct(r.avg.damageShare)),
   ]

@@ -75,8 +75,14 @@ export const CONFIG = {
     damageShare: (v: number) => (v - 0.05) / 0.3, //  35% of team damage -> 1.0
   },
 
-  /** Sub-score weights. Must sum to 1. */
+  /** Sub-score weights for non-support games. Must sum to 1. */
   weights: { kda: 0.28, kp: 0.22, farm: 0.18, gold: 0.16, damage: 0.16 },
+
+  /**
+   * Support games: no CS/min, no gold/min. Here `farm` is vision/min - weighted
+   * heavily - and damage share barely counts. Must sum to 1.
+   */
+  supportWeights: { kda: 0.3, kp: 0.32, farm: 0.32, damage: 0.06 },
 }
 
 /** Per-factor 0..1 sub-scores (post-clamp), before weighting. */
@@ -116,8 +122,8 @@ export interface PlayerRating {
   rankTier: string | null
   games: number
   breakdown: GameScore[]
-  /** True when farm was dropped from the model (most rated games were support). */
-  farmExcluded: boolean
+  /** True when most rated games were support (uses the support weight profile). */
+  isSupport: boolean
   avg: {
     kda: number
     csPerMin: number
@@ -136,15 +142,9 @@ const mean = (xs: number[]): number => (xs.length ? xs.reduce((s, x) => s + x, 0
 
 const clampScore = (n: number): number => (n < 0 ? 0 : n > 100 ? 100 : n)
 
-/**
- * Weights actually applied to a game. Support games drop the farm (CS/min)
- * factor entirely and the remaining weights are renormalised to sum to 1.
- */
+/** Weights actually applied to a game - a separate profile for support games. */
 export function effectiveWeights(isSupport: boolean): Partial<Record<keyof Parts, number>> {
-  if (!isSupport) return CONFIG.weights
-  const { kda, kp, gold, damage } = CONFIG.weights
-  const total = kda + kp + gold + damage
-  return { kda: kda / total, kp: kp / total, gold: gold / total, damage: damage / total }
+  return isSupport ? CONFIG.supportWeights : CONFIG.weights
 }
 
 const rankAnchor = (key: string | null): { key: string; name: string; expected: number } => {
@@ -199,12 +199,12 @@ export function scoreGame(match: MatchDto, puuid: string): GameScore | null {
   const parts: Parts = {
     kda: clamp01(c.kda(kda)),
     kp: clamp01(c.kp(killParticipation)),
-    farm: clamp01(c.csPerMin(csPerMin)),
+    // `farm` is vision/min for supports, CS/min otherwise.
+    farm: clamp01(isSupport ? c.visionPerMin(visionPerMin) : c.csPerMin(csPerMin)),
     gold: clamp01(c.goldPerMin(goldPerMin)),
     damage: clamp01(c.damageShare(damageShare)),
   }
 
-  // Support games are scored without the CS/min factor.
   const w = effectiveWeights(isSupport)
   let score = 0
   for (const key of Object.keys(w) as (keyof Parts)[]) score += (w[key] ?? 0) * parts[key]
@@ -242,7 +242,7 @@ export function ratePlayer(
       rankTier,
       games: 0,
       breakdown: [],
-      farmExcluded: false,
+      isSupport: false,
       avg: {
         kda: 0,
         csPerMin: 0,
@@ -267,7 +267,7 @@ export function ratePlayer(
     rankTier,
     games: used.length,
     breakdown: used,
-    farmExcluded: used.filter((g) => g.isSupport).length > used.length / 2,
+    isSupport: used.filter((g) => g.isSupport).length > used.length / 2,
     avg: {
       kda: mean(used.map((g) => g.kda)),
       csPerMin: mean(used.map((g) => g.csPerMin)),

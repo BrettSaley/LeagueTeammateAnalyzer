@@ -1,4 +1,4 @@
-# LoL Teammate Tracker
+# Gainz's League Analyzer
 
 A small React web app that uses the Riot Games League of Legends API to show
 your **live game** (your team vs. the enemy team, with champions, summoner

@@ -79,7 +79,7 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>LoL Teammate Tracker</h1>
+        <h1>Gainz's League Analyzer</h1>
         <SearchBar riotId={riotId} region={region} onSearch={search} />
       </header>
 
@@ -109,7 +109,7 @@ export default function App() {
       )}
 
       <footer className="muted small">
-        LoL Teammate Tracker isn't endorsed by Riot Games. Champion data via Data Dragon.
+        Gainz's League Analyzer isn't endorsed by Riot Games. Champion data via Data Dragon.
       </footer>
     </div>
   )

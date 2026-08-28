@@ -116,8 +116,8 @@ export interface PlayerRating {
   rankTier: string | null
   games: number
   breakdown: GameScore[]
-  /** True when most rated games were played in the support role. */
-  farmIsVision: boolean
+  /** True when farm was dropped from the model (most rated games were support). */
+  farmExcluded: boolean
   avg: {
     kda: number
     csPerMin: number
@@ -135,6 +135,17 @@ const div = (a: number, b: number): number => (b > 0 ? a / b : 0)
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0)
 
 const clampScore = (n: number): number => (n < 0 ? 0 : n > 100 ? 100 : n)
+
+/**
+ * Weights actually applied to a game. Support games drop the farm (CS/min)
+ * factor entirely and the remaining weights are renormalised to sum to 1.
+ */
+export function effectiveWeights(isSupport: boolean): Partial<Record<keyof Parts, number>> {
+  if (!isSupport) return CONFIG.weights
+  const { kda, kp, gold, damage } = CONFIG.weights
+  const total = kda + kp + gold + damage
+  return { kda: kda / total, kp: kp / total, gold: gold / total, damage: damage / total }
+}
 
 const rankAnchor = (key: string | null): { key: string; name: string; expected: number } => {
   const i = RANKS.findIndex((r) => r.key === key)
@@ -188,14 +199,15 @@ export function scoreGame(match: MatchDto, puuid: string): GameScore | null {
   const parts: Parts = {
     kda: clamp01(c.kda(kda)),
     kp: clamp01(c.kp(killParticipation)),
-    farm: clamp01(isSupport ? c.visionPerMin(visionPerMin) : c.csPerMin(csPerMin)),
+    farm: clamp01(c.csPerMin(csPerMin)),
     gold: clamp01(c.goldPerMin(goldPerMin)),
     damage: clamp01(c.damageShare(damageShare)),
   }
 
-  const w = CONFIG.weights
+  // Support games are scored without the CS/min factor.
+  const w = effectiveWeights(isSupport)
   let score = 0
-  for (const key of Object.keys(w) as (keyof typeof w)[]) score += w[key] * parts[key]
+  for (const key of Object.keys(w) as (keyof Parts)[]) score += (w[key] ?? 0) * parts[key]
 
   return {
     matchId: match.metadata.matchId,
@@ -230,7 +242,7 @@ export function ratePlayer(
       rankTier,
       games: 0,
       breakdown: [],
-      farmIsVision: false,
+      farmExcluded: false,
       avg: {
         kda: 0,
         csPerMin: 0,
@@ -255,7 +267,7 @@ export function ratePlayer(
     rankTier,
     games: used.length,
     breakdown: used,
-    farmIsVision: used.filter((g) => g.isSupport).length > used.length / 2,
+    farmExcluded: used.filter((g) => g.isSupport).length > used.length / 2,
     avg: {
       kda: mean(used.map((g) => g.kda)),
       csPerMin: mean(used.map((g) => g.csPerMin)),

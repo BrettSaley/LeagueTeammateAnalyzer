@@ -1,6 +1,7 @@
 import type { Ddragon } from '../lib/ddragon'
 import {
   CONFIG,
+  effectiveWeights,
   labelForRawScore,
   rankComparisonText,
   rankName,
@@ -188,23 +189,19 @@ function factorLevel(sub: number): 'good' | 'ok' | 'poor' {
 }
 
 function factorRows(r: PlayerRating) {
-  const w = CONFIG.weights
+  const w = effectiveWeights(r.farmExcluded)
   const row = (key: keyof Parts, label: string, value: string) => ({
     key,
     label,
     value,
     sub: r.avgParts[key],
     level: factorLevel(r.avgParts[key]),
-    points: r.avgParts[key] * w[key] * 100,
+    points: r.avgParts[key] * (w[key] ?? 0) * 100,
   })
   return [
     row('kda', 'KDA', r.avg.kda.toFixed(1)),
     row('kp', 'Kill participation', pct(r.avg.killParticipation)),
-    row(
-      'farm',
-      r.farmIsVision ? 'Vision / min' : 'CS / min',
-      (r.farmIsVision ? r.avg.visionPerMin : r.avg.csPerMin).toFixed(1),
-    ),
+    ...(r.farmExcluded ? [] : [row('farm', 'CS / min', r.avg.csPerMin.toFixed(1))]),
     row('gold', 'Gold / min', Math.round(r.avg.goldPerMin).toString()),
     row('damage', 'Damage share', pct(r.avg.damageShare)),
   ]

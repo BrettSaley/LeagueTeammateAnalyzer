@@ -53,7 +53,7 @@ ignored):
 | --- | --- | --- |
 | KDA | 28% | |
 | Kill participation | 22% | |
-| CS per minute | 18% | vision/min instead, for supports |
+| CS per minute | 18% | dropped for support games; the other four weights renormalise to 1 |
 | Gold per minute | 16% | |
 | Damage share of team | 16% | |
 

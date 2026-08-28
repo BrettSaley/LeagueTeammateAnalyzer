@@ -1,0 +1,611 @@
+:root {
+  --bg: #0a0e14;
+  --panel: #121722;
+  --panel-2: #1a2130;
+  --line: #262f40;
+  --text: #e6e9ef;
+  --muted: #8b93a7;
+  --gold: #c8aa6e;
+  --blue: #4a9eff;
+  --win: #2b7a4b;
+  --loss: #a13b3b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.app {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+h1 {
+  font-size: 20px;
+  color: var(--gold);
+  margin: 0 0 12px;
+  letter-spacing: 0.5px;
+}
+
+h3 {
+  font-size: 12px;
+  margin: 18px 0 8px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+.error {
+  background: #2a1618;
+  border: 1px solid #5a2b2f;
+  color: #f0c9cc;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+
+.search {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search input {
+  flex: 1 1 220px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.search select,
+.search button {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.search button {
+  background: var(--gold);
+  color: #1a1206;
+  border: none;
+  font-weight: 600;
+}
+
+.resolved {
+  font-weight: 600;
+  font-size: 16px;
+  margin: 16px 0 4px;
+}
+
+.tag {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  margin: 8px 0 4px;
+}
+
+.tabs button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+}
+
+.tabs button.active {
+  color: var(--text);
+  border-bottom-color: var(--gold);
+}
+
+.game-meta {
+  display: flex;
+  gap: 14px;
+  color: var(--muted);
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+.team,
+.teammates-summary {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+
+.bans {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.bans img {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  filter: grayscale(1) brightness(0.7);
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-top: 1px solid var(--line);
+}
+
+.player-row:first-of-type {
+  border-top: none;
+}
+
+.player-row.self {
+  background: rgba(200, 170, 110, 0.09);
+  border-radius: 6px;
+}
+
+.player-row .champ {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  flex: none;
+  background: var(--panel-2);
+}
+
+.icons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: none;
+}
+
+.icons img {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+.icons img.rune {
+  background: #0006;
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.who .name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.who .rank {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.kda {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+.together {
+  color: var(--gold);
+  font-size: 12px;
+  flex: none;
+}
+
+.rating {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  cursor: help;
+}
+
+.rating.pending {
+  font-weight: 400;
+  color: var(--muted);
+  cursor: default;
+}
+
+/* Descriptive-tier palette, shared by the badge and the scale bands. */
+.rating[data-tier],
+.scale-seg[data-tier] {
+  --tk-fg: var(--muted);
+  --tk-bg: var(--panel-2);
+}
+.rating[data-tier='Inter'],
+.scale-seg[data-tier='Inter'] {
+  --tk-fg: #ef7676;
+  --tk-bg: rgba(198, 55, 55, 0.26);
+}
+.rating[data-tier='Useless'],
+.scale-seg[data-tier='Useless'] {
+  --tk-fg: #e8935a;
+  --tk-bg: rgba(200, 110, 60, 0.24);
+}
+.rating[data-tier='Competent'],
+.scale-seg[data-tier='Competent'] {
+  --tk-fg: #6fb3e8;
+  --tk-bg: rgba(74, 158, 255, 0.2);
+}
+.rating[data-tier='Gamer'],
+.scale-seg[data-tier='Gamer'] {
+  --tk-fg: #6bd39a;
+  --tk-bg: rgba(43, 122, 75, 0.28);
+}
+.rating[data-tier='1v9'],
+.scale-seg[data-tier='1v9'] {
+  --tk-fg: var(--gold);
+  --tk-bg: rgba(200, 170, 110, 0.3);
+}
+
+.rating[data-tier] {
+  color: var(--tk-fg);
+  background: var(--tk-bg);
+}
+
+.rating[data-tier='1v9'] {
+  box-shadow: inset 0 0 0 1px rgba(200, 170, 110, 0.45);
+}
+
+.scorecard {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 8px 0 14px;
+}
+
+.scorecard-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.scorecard-head .name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.scorecard-head .who {
+  display: flex;
+  flex-direction: column;
+}
+
+.factors {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.factor {
+  display: grid;
+  grid-template-columns: 1fr auto 96px 40px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.factor-label {
+  color: var(--muted);
+}
+
+.factor-value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.factor-bar {
+  height: 6px;
+  background: var(--panel-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.factor-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+}
+
+.factor[data-level='good'] .factor-bar > span {
+  background: #6bd39a;
+}
+.factor[data-level='poor'] .factor-bar > span {
+  background: #e79aa0;
+}
+.factor[data-level='good'] .factor-value,
+.factor[data-level='good'] .factor-points {
+  color: #6bd39a;
+}
+.factor[data-level='poor'] .factor-value,
+.factor[data-level='poor'] .factor-points {
+  color: #e79aa0;
+}
+
+.factor-points {
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.factor.total {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.factor.total .factor-label,
+.factor.total .factor-value {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.factor.total .factor-points {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.game-pips {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.scale-track {
+  position: relative;
+  margin-top: 16px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.scale-bar {
+  display: flex;
+  height: 22px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.scale-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--tk-fg);
+  background: var(--tk-bg);
+  box-shadow: inset -1px 0 0 var(--panel);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.scale-seg:last-child {
+  box-shadow: none;
+}
+
+.scale-marker {
+  position: absolute;
+  top: 14px;
+  height: 32px;
+  width: 2px;
+  background: var(--text);
+  transform: translateX(-1px);
+}
+
+.scale-caption {
+  margin-top: 6px;
+}
+
+.champ-stats {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.champ-stat {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto auto auto auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.champ-stat .rating {
+  font-size: 10px;
+  padding: 1px 6px;
+  cursor: default;
+}
+
+.champ-stat img,
+.champ-stat .champ-ic-ph {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: var(--panel-2);
+}
+
+.champ-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.champ-cs {
+  color: var(--muted);
+}
+
+.champ-score {
+  font-weight: 700;
+  min-width: 18px;
+  text-align: right;
+}
+
+.scorecard-verdict {
+  margin: 2px 0 12px;
+  font-size: 13px;
+}
+
+.scale-marker-value {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 3px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pip.win {
+  background: rgba(43, 122, 75, 0.25);
+  color: #6bd39a;
+}
+
+.pip.loss {
+  background: rgba(161, 59, 59, 0.25);
+  color: #e79aa0;
+}
+
+.match {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--muted);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+}
+
+.match.win {
+  border-left-color: var(--win);
+}
+
+.match.loss {
+  border-left-color: var(--loss);
+}
+
+.match-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.match-head .result {
+  font-weight: 600;
+}
+
+.team-split {
+  margin: 10px 0 4px;
+  padding: 4px 4px 4px 8px;
+  border-left: 3px solid var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.team-split.ally {
+  border-left-color: var(--blue);
+  color: #9cc7f2;
+}
+
+.team-split.enemy {
+  border-left-color: var(--loss);
+  color: #e79aa0;
+}
+
+.match.win .result {
+  color: #6bd39a;
+}
+
+.match.loss .result {
+  color: #e79aa0;
+}
+
+button.link {
+  background: none;
+  border: none;
+  color: var(--blue);
+  cursor: pointer;
+  font-size: 13px;
+  margin-left: auto;
+  padding: 0;
+}
+
+button.link + button.link {
+  margin-left: 0;
+}
+
+button.link.analyze {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+footer {
+  margin-top: 40px;
+  text-align: center;
+}

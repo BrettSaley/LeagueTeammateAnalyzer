@@ -79,10 +79,11 @@ export const CONFIG = {
   weights: { kda: 0.28, kp: 0.22, farm: 0.18, gold: 0.16, damage: 0.16 },
 
   /**
-   * Support games: no CS/min, no gold/min. Here `farm` is vision/min - weighted
-   * heavily - and damage share barely counts. Must sum to 1.
+   * Support games: no CS/min, no gold/min. Here `farm` is vision/min and damage
+   * share barely counts; KP and KDA carry most of the grade, with vision a
+   * smaller supporting factor. Must sum to 1.
    */
-  supportWeights: { kda: 0.3, kp: 0.32, farm: 0.32, damage: 0.06 },
+  supportWeights: { kda: 0.36, kp: 0.38, farm: 0.2, damage: 0.06 },
 }
 
 /** Per-factor 0..1 sub-scores (post-clamp), before weighting. */

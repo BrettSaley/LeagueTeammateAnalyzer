@@ -5,6 +5,7 @@ import { MatchHistory } from './components/MatchHistory'
 import { ApiError, getAccount } from './lib/api'
 import type { AccountDto } from './lib/types'
 import { useDdragon } from './hooks/useDdragon'
+import { useFavorites } from './lib/favorites'
 
 type Tab = 'live' | 'history'
 
@@ -28,6 +29,7 @@ function parseRiotId(v: string): { gameName: string; tagLine: string } | null {
 
 export default function App() {
   const dd = useDdragon()
+  const { favorites, isFavorite, toggle, remove } = useFavorites()
   const [{ riotId, region }, setQuery] = useState<Query>(readInitialQuery)
   const [tab, setTab] = useState<Tab>('history')
   const [account, setAccount] = useState<AccountDto | null>(null)
@@ -90,6 +92,26 @@ export default function App() {
       <header>
         <h1>Gainz's League Analyzer</h1>
         <SearchBar riotId={riotId} region={region} onSearch={search} />
+        {favorites.length > 0 && (
+          <div className="favorites">
+            {favorites.map((f) => (
+              <span key={`${f.region}:${f.riotId}`} className="fav-chip">
+                <button type="button" onClick={() => search(f.riotId, f.region)}>
+                  {f.riotId}
+                  <span className="tag"> {f.region}</span>
+                </button>
+                <button
+                  type="button"
+                  className="x"
+                  aria-label={`Remove ${f.riotId} from favorites`}
+                  onClick={() => remove(f.riotId, f.region)}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
       </header>
 
       {loading && <p className="muted">Looking up summoner...</p>}
@@ -100,6 +122,21 @@ export default function App() {
           <p className="resolved">
             {account.gameName}
             <span className="tag">#{account.tagLine}</span>
+            {(() => {
+              const id = `${account.gameName}#${account.tagLine}`
+              const saved = isFavorite(id, region)
+              return (
+                <button
+                  type="button"
+                  className="star-btn"
+                  aria-pressed={saved}
+                  title={saved ? 'Remove from favorites' : 'Save to favorites'}
+                  onClick={() => toggle(id, region)}
+                >
+                  {saved ? '★' : '☆'}
+                </button>
+              )
+            })()}
           </p>
           <nav className="tabs">
             <button className={tab === 'history' ? 'active' : ''} onClick={() => setTab('history')}>

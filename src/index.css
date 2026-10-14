@@ -94,10 +94,66 @@ h3 {
   font-weight: 600;
 }
 
+.favorites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.fav-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.fav-chip > button {
+  background: none;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 4px 5px 12px;
+  cursor: pointer;
+}
+
+.fav-chip > button:hover {
+  color: var(--blue);
+}
+
+.fav-chip .x {
+  padding: 5px 10px 5px 6px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.fav-chip .x:hover {
+  color: var(--loss);
+}
+
 .resolved {
   font-weight: 600;
   font-size: 16px;
   margin: 16px 0 4px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 4px;
+  vertical-align: baseline;
+}
+
+.star-btn[aria-pressed='false'] {
+  color: var(--muted);
 }
 
 .tag {

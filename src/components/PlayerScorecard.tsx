@@ -5,6 +5,7 @@ import {
   labelForRawScore,
   rankComparisonText,
   rankName,
+  ratingInsights,
   type GameScore,
   type Parts,
   type PlayerRating,
@@ -51,6 +52,8 @@ export function PlayerScorecard({ name, tag, rating, dd }: Props) {
       {rated && (
         <>
           <p className="scorecard-verdict">Playing {rankComparisonText(rating!)}</p>
+
+          <InsightTags rating={rating!} />
 
           <div className="factors">
             {factorRows(rating!).map((f) => (
@@ -146,6 +149,21 @@ export function PlayerScorecard({ name, tag, rating, dd }: Props) {
         </>
       )}
     </section>
+  )
+}
+
+/** "Dies too much", "Low CS", ... - why the score is where it is. */
+function InsightTags({ rating }: { rating: PlayerRating }) {
+  const insights = ratingInsights(rating)
+  if (insights.length === 0) return null
+  return (
+    <div className="insights">
+      {insights.map((i) => (
+        <span className="insight" data-kind={i.kind} key={i.key}>
+          {i.text}
+        </span>
+      ))}
+    </div>
   )
 }
 

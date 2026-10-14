@@ -67,7 +67,11 @@ export const CONFIG = {
    * Denominators are calibrated so a roughly average Gold/Plat game lands ~0.45.
    */
   curves: {
-    kda: (v: number) => v / 6, //  6.0 KDA  -> 1.0
+    // KDA is unbounded (a deathless game is "infinite"), so instead of a linear
+    // ramp + hard clamp it saturates: v/(v+3.3) gives ~0.45 at KDA 2.7 (avg Gold),
+    // ~0.65 at 6, ~0.82 at 15, approaching but never reaching 1. A 10/0 game reads
+    // as exceptional without one smurf game pinning the whole average at max.
+    kda: (v: number) => v / (v + 3.3),
     kp: (v: number) => (v - 0.2) / 0.6, //  80% kill participation -> 1.0
     csPerMin: (v: number) => (v - 2) / 9, //  11 cs/min -> 1.0
     visionPerMin: (v: number) => (v - 0.4) / 2.0, //  supports: vision instead of cs
@@ -84,6 +88,20 @@ export const CONFIG = {
    * smaller supporting factor. Must sum to 1.
    */
   supportWeights: { kda: 0.36, kp: 0.38, farm: 0.2, damage: 0.06 },
+
+  /**
+   * Insight tags ("Low CS", "Dies too much", ...). A factor is tagged weak when
+   * its averaged sub-score is `weakMargin` below the bar for the player's rank
+   * (that rank's `expected` / 100), and strong when `strongMargin` above it.
+   */
+  insights: {
+    weakMargin: 0.15,
+    strongMargin: 0.2,
+    /** Average deaths per game at/above this -> "Dies too much". */
+    highDeaths: 7,
+    /** Average deaths per game at/below this -> "Rarely dies". */
+    lowDeaths: 3,
+  },
 }
 
 /** Per-factor 0..1 sub-scores (post-clamp), before weighting. */
@@ -103,6 +121,7 @@ export interface GameScore {
   win: boolean
   score: number
   kda: number
+  deaths: number
   csPerMin: number
   visionPerMin: number
   goldPerMin: number
@@ -127,6 +146,7 @@ export interface PlayerRating {
   isSupport: boolean
   avg: {
     kda: number
+    deaths: number
     csPerMin: number
     visionPerMin: number
     goldPerMin: number
@@ -218,6 +238,7 @@ export function scoreGame(match: MatchDto, puuid: string): GameScore | null {
     win: p.win,
     score: Math.round(clamp01(score) * 100),
     kda,
+    deaths: p.deaths,
     csPerMin,
     visionPerMin,
     goldPerMin,
@@ -246,6 +267,7 @@ export function ratePlayer(
       isSupport: false,
       avg: {
         kda: 0,
+        deaths: 0,
         csPerMin: 0,
         visionPerMin: 0,
         goldPerMin: 0,
@@ -271,6 +293,7 @@ export function ratePlayer(
     isSupport: used.filter((g) => g.isSupport).length > used.length / 2,
     avg: {
       kda: mean(used.map((g) => g.kda)),
+      deaths: mean(used.map((g) => g.deaths)),
       csPerMin: mean(used.map((g) => g.csPerMin)),
       visionPerMin: mean(used.map((g) => g.visionPerMin)),
       goldPerMin: mean(used.map((g) => g.goldPerMin)),
@@ -307,16 +330,80 @@ export function rankComparisonText(r: PlayerRating): string {
   return `${Math.abs(d) < 22 ? '' : 'well '}${dir} ${at}`
 }
 
+export interface Insight {
+  key: string
+  text: string
+  kind: 'weak' | 'strong'
+}
+
+/**
+ * Short tags explaining a rating - what is dragging the score down, or
+ * carrying it. Judged against the bar for the player's rank, like the label.
+ * Weaknesses come first, biggest impact on the score first.
+ */
+export function ratingInsights(r: PlayerRating): Insight[] {
+  if (r.games === 0) return []
+  const c = CONFIG.insights
+  const bar = rankAnchor(r.rankTier).expected / 100
+  const w = effectiveWeights(r.isSupport)
+  const names: Record<keyof Parts, [weak: string, strong: string]> = {
+    kda: ['Low KDA', 'Great KDA'],
+    kp: ['Low kill participation', 'Always in fights'],
+    farm: r.isSupport ? ['Low vision', 'Great vision'] : ['Low CS', 'Great CS'],
+    gold: ['Low gold', 'High gold'],
+    damage: ['Low damage', 'High damage'],
+  }
+
+  const weak: (Insight & { impact: number })[] = []
+  const strong: (Insight & { impact: number })[] = []
+
+  const diesALot = r.avg.deaths >= c.highDeaths
+  if (diesALot) weak.push({ key: 'deaths', text: 'Dies too much', kind: 'weak', impact: Infinity })
+  else if (r.avg.deaths <= c.lowDeaths)
+    strong.push({ key: 'deaths', text: 'Rarely dies', kind: 'strong', impact: Infinity })
+
+  for (const key of Object.keys(names) as (keyof Parts)[]) {
+    const weight = w[key] ?? 0
+    // Support damage barely counts and is expected to be low - never tag it.
+    if (weight === 0 || (r.isSupport && key === 'damage')) continue
+    const gap = r.avgParts[key] - bar
+    // "Dies too much" already explains a low KDA.
+    if (gap <= -c.weakMargin && !(key === 'kda' && diesALot))
+      weak.push({ key, text: names[key][0], kind: 'weak', impact: -gap * weight })
+    else if (gap >= c.strongMargin)
+      strong.push({ key, text: names[key][1], kind: 'strong', impact: gap * weight })
+  }
+
+  const byImpact = (a: { impact: number }, b: { impact: number }) => b.impact - a.impact
+  return [...weak.sort(byImpact), ...strong.sort(byImpact)].map(({ key, text, kind }) => ({
+    key,
+    text,
+    kind,
+  }))
+}
+
 export function ratingTooltip(r: PlayerRating): string {
   if (r.games === 0) return 'No recent ranked games to rate.'
   const pct = (n: number) => `${Math.round(n * 100)}%`
   const span = r.games === 1 ? 'last ranked game' : `last ${r.games} ranked games`
+  const insights = ratingInsights(r)
+  const list = (kind: Insight['kind']) =>
+    insights
+      .filter((i) => i.kind === kind)
+      .map((i) => i.text)
+      .join(', ')
   return [
     `${r.label} ${rankAnchorText(r)} — playing ${rankComparisonText(r)}`,
     `Raw score ${r.score}/100 · rank-adjusted ${r.adjusted}/100 · ${span}`,
     `KDA ${r.avg.kda.toFixed(1)} · ${r.avg.csPerMin.toFixed(1)} cs/min · ${Math.round(
       r.avg.goldPerMin,
     )} gold/min`,
-    `KP ${pct(r.avg.killParticipation)} · dmg share ${pct(r.avg.damageShare)}`,
-  ].join('\n')
+    `KP ${pct(r.avg.killParticipation)} · dmg share ${pct(r.avg.damageShare)} · ${r.avg.deaths.toFixed(
+      1,
+    )} deaths/game`,
+    list('weak') && `Weak: ${list('weak')}`,
+    list('strong') && `Strong: ${list('strong')}`,
+  ]
+    .filter(Boolean)
+    .join('\n')
 }

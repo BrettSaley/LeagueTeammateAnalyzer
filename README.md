@@ -75,6 +75,14 @@ anchored to `defaultRank` (Gold). The adjusted score is bucketed by `CONFIG.tier
 the curves and `maxGames` all live at the top of `src/lib/rating.ts`. Riot's
 precomputed `challenges` stats are used when present, with manual fallbacks.
 
+**Insight tags.** Each rating also gets short tags explaining it – red for what
+drags it down (*Dies too much, Low CS, Low vision, Low kill participation, Low
+damage…*), green for what carries it (*Great CS, Rarely dies…*). A factor is
+tagged when its average sub-score sits clearly below/above the bar for the
+player's rank; deaths use a flat per-game average (≥7 / ≤3). The scorecard shows
+all tags, player rows show the top two weaknesses (hidden on narrow screens),
+and the badge tooltip lists them all. Thresholds live in `CONFIG.insights`.
+
 Rating one (player, reference time) costs ~`2 + maxGames` API calls (a match-id
 lookup, a rank lookup, and each match), cached per session (rank is cached per
 player). A fresh Match History costs ~`(1 + teammates) * (2 + maxGames)` up

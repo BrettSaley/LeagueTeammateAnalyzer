@@ -1,5 +1,5 @@
 import type { Ddragon } from '../lib/ddragon'
-import { ratingTooltip, type PlayerRating } from '../lib/rating'
+import { ratingInsights, ratingTooltip, type PlayerRating } from '../lib/rating'
 
 interface Props {
   dd: Ddragon | null
@@ -82,9 +82,20 @@ export function PlayerRow(p: Props) {
 function Rating({ rating }: { rating?: PlayerRating | null }) {
   if (rating === undefined) return null
   if (rating === null) return <span className="rating pending">rating…</span>
+  // Rows are tight - show only the two biggest weaknesses; the rest are in the tooltip.
+  const weak = ratingInsights(rating)
+    .filter((i) => i.kind === 'weak')
+    .slice(0, 2)
   return (
-    <span className="rating" data-tier={rating.label} title={ratingTooltip(rating)}>
-      {rating.label}
-    </span>
+    <>
+      <span className="rating" data-tier={rating.label} title={ratingTooltip(rating)}>
+        {rating.label}
+      </span>
+      {weak.map((i) => (
+        <span className="insight row-insight" data-kind="weak" key={i.key}>
+          {i.text}
+        </span>
+      ))}
+    </>
   )
 }

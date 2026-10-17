@@ -156,6 +156,29 @@ h3 {
   color: var(--muted);
 }
 
+.update-btn {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  margin-left: 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.update-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+
+.update-btn:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .tag {
   color: var(--muted);
   font-weight: 400;

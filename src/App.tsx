@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { SearchBar } from './components/SearchBar'
 import { LiveGame } from './components/LiveGame'
 import { MatchHistory } from './components/MatchHistory'
+import { UpdateButton } from './components/UpdateButton'
 import { ApiError, getAccount } from './lib/api'
 import type { AccountDto } from './lib/types'
 import { useDdragon } from './hooks/useDdragon'
@@ -137,6 +138,7 @@ export default function App() {
                 </button>
               )
             })()}
+            <UpdateButton />
           </p>
           <nav className="tabs">
             <button className={tab === 'history' ? 'active' : ''} onClick={() => setTab('history')}>
